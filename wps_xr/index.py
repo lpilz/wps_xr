@@ -64,7 +64,7 @@ def _construct_index(pathname_or_obj):
         pathname_or_obj (str,pathlib.Path): Directory/filename to read index file from.
     """
     if os.path.basename(pathname_or_obj) != "index":
-        pathname_or_obj = os.path.join(os.path.dirname(pathname_or_obj), "index")
+        pathname_or_obj = os.path.join(pathname_or_obj, "index")
 
     _dict = __read_index(pathname_or_obj)
 
@@ -85,7 +85,7 @@ def _write_index(pathname_or_obj):
         pathname_or_obj (str,pathlib.Path): Directory/filename to write index file.
     """
     if os.path.basename(pathname_or_obj) != "index":
-        pathname_or_obj = os.path.join(os.path.dirname(pathname_or_obj), "index")
+        pathname_or_obj = os.path.join(pathname_or_obj, "index")
 
     with open(pathname_or_obj, "w") as f:
         for key, val in config.get("index").items():

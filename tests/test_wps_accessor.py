@@ -56,10 +56,10 @@ def dataset(request):
     ],
     indirect=["dataset"],
 )
-def test_to_wps_data(tmp_path_factory, dataset, tile_size):
-    """Tests WPSAccessor.to_wps_data"""
+def test_to_disk(tmp_path_factory, dataset, tile_size):
+    """Tests WPSAccessor.to_disk"""
     dn = tmp_path_factory.mktemp(f"out_{tile_size[0]}-{tile_size[1]}")
-    dataset.wps.to_wps_data(dn, tile_size=tile_size, force=True)
+    dataset.wps.to_disk(dn, tile_size=tile_size, force=True)
     indexfile = os.path.join(dn, "index")
     assert os.path.exists(indexfile) and os.path.isfile(indexfile)
 

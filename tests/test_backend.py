@@ -11,9 +11,11 @@ test_files = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_fil
 
 
 @pytest.mark.parametrize(
-    "filename,dtype,dims", [("usgs/00001-01200.00001-01200", "int8", ["x", "y"])]
+    "filename,dtype,dims",
+    [(os.path.join("usgs", "00001-01200.00001-01200"), "int8", ["x", "y"])],
 )
 def test_open_dataset(filename, dtype, dims):
+    print(test_files, filename)
     _construct_index(os.path.join(test_files, os.path.dirname(filename)))
     ds = xr.open_dataset(
         os.path.join(test_files, filename), dtype=dtype, engine=BinaryBackend
@@ -26,7 +28,8 @@ def test_open_dataset(filename, dtype, dims):
 
 
 @pytest.mark.parametrize(
-    "filename,dtype,dims", [(Path("usgs/01201-02400.00001-01200"), "int8", ["x", "y"])]
+    "filename,dtype,dims",
+    [(Path("usgs") / Path("01201-02400.00001-01200"), "int8", ["x", "y"])],
 )
 def test_open_dataset_pathlib(filename, dtype, dims):
     _construct_index(os.path.join(test_files, os.path.dirname(filename)))
@@ -39,7 +42,8 @@ def test_open_dataset_pathlib(filename, dtype, dims):
 
 
 @pytest.mark.parametrize(
-    "filename,dtype,dims", [("usgs/00001-01200.00001-01200", "int8", ["x", "y"])]
+    "filename,dtype,dims",
+    [(os.path.join("usgs", "00001-01200.00001-01200"), "int8", ["x", "y"])],
 )
 def test_open_dataset_dask(filename, dtype, dims):
     _construct_index(os.path.join(test_files, os.path.dirname(filename)))
