@@ -6,8 +6,6 @@ from .backend import BinaryBackend
 from .config import config
 from .index import _construct_index
 
-COMBINED_PARAMS = [("tile_z_start", "tile_z_end"), ("category_min", "category_max")]
-
 
 def _add_latlon_coords(ds):
     assert config.get("index.projection") == "regular_ll"

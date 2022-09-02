@@ -35,14 +35,16 @@ def __check_index(index):
     assert index["row_order"] in ["bottom_top", "top_bottom"]
     assert index["endian"] in ["big", "little"]
     assert index["filename_digits"] in [5, 6]
-    if hasattr(index, "category_min"):
-        assert hasattr(index, "category_max")
-    if hasattr(index, "category_max"):
-        assert hasattr(index, "category_min")
+
+    # the combined parameters should only occur in pairs
+    for params in config.get("general.COMBINED_PARAMS"):
+        _intersect = set(params).intersection(set(index.keys()))
+        if _intersect:
+            assert len(_intersect) == 2
+
+    # tile_z_{start,end} and tile_z are mutually exclusive
     if hasattr(index, "tile_z_start"):
-        assert hasattr(index, "tile_z_end") and not hasattr(index, "tile_z")
-    if hasattr(index, "tile_z_end"):
-        assert hasattr(index, "tile_z_start") and not hasattr(index, "tile_z")
+        assert not hasattr(index, "tile_z")
     if hasattr(index, "tile_z"):
         assert not hasattr(index, "tile_z_start") and not hasattr(index, "tile_z_end")
 
