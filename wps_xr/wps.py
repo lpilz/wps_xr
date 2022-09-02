@@ -8,6 +8,11 @@ from .index import _construct_index
 
 
 def _add_latlon_coords(ds):
+    """Adds latlon coords to dataset based on wps_xr.config object
+
+    Note:
+        At the moment, this only supports `regular_ll` projections
+    """
     assert config.get("index.projection") == "regular_ll"
     lat = (ds.y.values - config.get("index.known_y")) * config.get(
         "index.dy"
@@ -22,6 +27,11 @@ def _add_latlon_coords(ds):
 
 
 def _generate_dtype():
+    """Generates datatype from wps_xr.config object
+
+    Returns:
+        dtype (str): datatype constructed from wps_xr.config
+    """
     int_str = "u" if config.get("index.signed") == "no" else "i"
     endian_str = (
         ""
@@ -34,6 +44,16 @@ def _generate_dtype():
 
 
 def open_dataset(pathname_or_obj):
+    """Opens a WPS geogrid binary dataset as an xarray.Dataset object and populates config
+
+    Note:
+        I know this might not be the prettiest way of solving this, but this method
+        implicitly populates the wps_xr.config object, which is needed for the Backend.
+
+    Args:
+        pathname_or_obj (str,pathlib.Path): Path of the dataset to open
+    """
+
     if not os.path.isdir(pathname_or_obj) and not os.path.exists(
         os.path.join(pathname_or_obj, "index")
     ):

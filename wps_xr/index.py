@@ -6,10 +6,14 @@ from .config import config
 
 
 def __read_index(filename_or_obj):
-    """Reads index from given file, overriding defaults"""
+    """Reads wps_xr.config.get("index") from given file, overriding defaults.
+
+    Args:
+        filename_or_obj (str,pathlib.Path): File to read
+    """
     _dict = copy.deepcopy(config.get("index_defaults"))
 
-    with open(os.path.join(filename_or_obj), "r") as f:
+    with open(filename_or_obj, "r") as f:
         for line in f:
             key, val = line.split("=")
             key = key.lower()
@@ -25,7 +29,11 @@ def __read_index(filename_or_obj):
 
 
 def __check_index(index):
-    """Checks index against the rules laid out in the WRF user's guide (v4.3)"""
+    """Checks index dict against the rules laid out in the WRF user's guide (v4.3).
+
+    Args:
+        index (dict): Index dictionary to check.
+    """
     if index["projection"] not in [
         "regular_ll"
     ]:  # , 'lambert', 'polar', 'mercator',  'albers_nad83', 'polar_wgs84']
@@ -50,9 +58,13 @@ def __check_index(index):
 
 
 def _construct_index(pathname_or_obj):
-    """Reads index from dir/file and constructs config index object"""
+    """Reads index from dir/file and constructs wps_xr.config.get("index") object.
+
+    Args:
+        pathname_or_obj (str,pathlib.Path): Directory/filename to read index file from.
+    """
     if os.path.basename(pathname_or_obj) != "index":
-        pathname_or_obj = os.path.join(pathname_or_obj, "index")
+        pathname_or_obj = os.path.join(os.path.dirname(pathname_or_obj), "index")
 
     _dict = __read_index(pathname_or_obj)
 
@@ -64,12 +76,16 @@ def _construct_index(pathname_or_obj):
 
 
 def _write_index(pathname_or_obj):
-    """Writes index file to disk
+    """Writes index file from wps_xr.config.get("index") to disk.
 
-    This function only writes non-default values.
+    Note:
+        This function only writes non-default values.
+
+    Args:
+        pathname_or_obj (str,pathlib.Path): Directory/filename to write index file.
     """
     if os.path.basename(pathname_or_obj) != "index":
-        pathname_or_obj = os.path.join(pathname_or_obj, "index")
+        pathname_or_obj = os.path.join(os.path.dirname(pathname_or_obj), "index")
 
     with open(pathname_or_obj, "w") as f:
         for key, val in config.get("index").items():

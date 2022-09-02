@@ -13,6 +13,11 @@ from .wps import _generate_dtype
 
 
 def _prepare_wps_directory(dirname_or_obj, force):
+    """Prepares output directory by creating a new one or overriding an old one.
+
+    Args:
+        force (bool): Deletes the old directory should it already exist.
+    """
     try:
         if force:
             logger.warning("Removing existing directory")
@@ -26,6 +31,20 @@ def _prepare_wps_directory(dirname_or_obj, force):
 
 
 def _pad_data_if_needed(da, tile_size):
+    """Pads the DataArray if necessary.
+
+    This method checks if padding is necessary and performs it if true.
+
+    Note:
+        Padding is performed with `index.missing_value` from wps_xr.config object.
+
+    Args:
+        da (xarray.DataArray): Data to potentially pad.
+        tile_size (tuple of ints): Size of output tiles.
+
+    Raises:
+        KeyError: If padding is necessary but `index.missing_value` is not set.
+    """
     shape = np.array([da.shape[da.dims.index(d)] for d in ["x", "y"]])
     tile_size = np.array(tile_size)
     padding_needed = shape - (shape // tile_size) * tile_size
@@ -49,13 +68,14 @@ class WPSAccessor:
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
 
-    def to_wps_data(self, dirname_or_obj, var=None, tile_size=None, force=False):
-        """Writes Dataset to WPS static data
+    def to_disk(self, dirname_or_obj, var=None, tile_size=None, force=False):
+        """Writes Dataset to disk.
 
         Args:
-            dirname_or_obj(str, pathlib.Path): dirname or Path object of output directory
-            var(str): name of variable to write to disk
-            tile_size(tuple): size of individual tiles to write (x,y)
+            dirname_or_obj (str, pathlib.Path): Name of output directory.
+            var (str): Name of variable to write to disk.
+            tile_size (tuple): Size of individual tiles to write (x,y).
+            force (bool): Whether to override existing data if some is present.
         """
         if var is None:
             if len(self._obj.data_vars) > 1:
@@ -109,7 +129,14 @@ class WPSAccessor:
         return
 
     def plot(self, var):
-        """Plot variable sensibly"""
+        """Plot variable sensibly.
+
+        Plots the given variable in the right orientation,
+        using a categorical colorbar for categorical data.
+
+        Args:
+            var (str): Variable to plot
+        """
         if self._obj[var].attrs["type"] == "categorical":
             levels = list(
                 range(
