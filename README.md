@@ -18,7 +18,7 @@ An example for `usgs` data might look like this:
 ```
 ds.wps.to_wps_data(<output_path>, var="usgs", tile_size=(1200,1200), force=True)
 ```
-This method will **not** use the global and variable attributes.
+This method will **not use the global and variable attributes**.
 For output format configuration, please refer to the next section.
 
 ### Configuring the output
