@@ -1,12 +1,12 @@
-import os
 import ast
 import copy
+import os
 
 from .config import config
 
+
 def __read_index(filename_or_obj):
-    """Reads index from given file, overriding defaults
-    """
+    """Reads index from given file, overriding defaults"""
     _dict = copy.deepcopy(config.get("index_defaults"))
 
     with open(os.path.join(filename_or_obj), "r") as f:
@@ -18,21 +18,23 @@ def __read_index(filename_or_obj):
                 val = ast.literal_eval(val)
             except (ValueError, SyntaxError):
                 pass
-            _dict.update({key:val})
+            _dict.update({key: val})
     if "signed" in _dict:
         _dict["signed"] = "yes" if _dict["signed"] else "no"
     return _dict
 
+
 def __check_index(index):
-    """Checks index against the rules laid out in the WRF user's guide (v4.3)
-    """
-    if index['projection'] not in ['regular_ll']: #, 'lambert', 'polar', 'mercator',  'albers_nad83', 'polar_wgs84']
+    """Checks index against the rules laid out in the WRF user's guide (v4.3)"""
+    if index["projection"] not in [
+        "regular_ll"
+    ]:  # , 'lambert', 'polar', 'mercator',  'albers_nad83', 'polar_wgs84']
         raise NotImplementedError("Other projections are not implemented yet")
-    assert index['type'] in ['continuous', 'categorical']
-    assert index['signed'] in ['yes', 'no'], index
-    assert index['row_order'] in ['bottom_top', 'top_bottom']
-    assert index['endian'] in ['big', 'little']
-    assert index['filename_digits'] in [5, 6]
+    assert index["type"] in ["continuous", "categorical"]
+    assert index["signed"] in ["yes", "no"], index
+    assert index["row_order"] in ["bottom_top", "top_bottom"]
+    assert index["endian"] in ["big", "little"]
+    assert index["filename_digits"] in [5, 6]
     if hasattr(index, "category_min"):
         assert hasattr(index, "category_max")
     if hasattr(index, "category_max"):
@@ -44,11 +46,11 @@ def __check_index(index):
     if hasattr(index, "tile_z"):
         assert not hasattr(index, "tile_z_start") and not hasattr(index, "tile_z_end")
 
+
 def _construct_index(pathname_or_obj):
-    """Reads index from dir/file and constructs config index object
-    """
-    if os.path.basename(pathname_or_obj) != 'index':
-        pathname_or_obj = os.path.join(pathname_or_obj, 'index')
+    """Reads index from dir/file and constructs config index object"""
+    if os.path.basename(pathname_or_obj) != "index":
+        pathname_or_obj = os.path.join(pathname_or_obj, "index")
 
     _dict = __read_index(pathname_or_obj)
 
@@ -58,17 +60,21 @@ def _construct_index(pathname_or_obj):
 
     return _dict
 
+
 def _write_index(pathname_or_obj):
     """Writes index file to disk
 
     This function only writes non-default values.
     """
-    if os.path.basename(pathname_or_obj) != 'index':
-        pathname_or_obj = os.path.join(pathname_or_obj, 'index')
+    if os.path.basename(pathname_or_obj) != "index":
+        pathname_or_obj = os.path.join(pathname_or_obj, "index")
 
     with open(pathname_or_obj, "w") as f:
-        for key,val in config.get("index").items():
-            if key in config.get("index_defaults") and val != config.get("index_defaults")[key]:
+        for key, val in config.get("index").items():
+            if (
+                key in config.get("index_defaults")
+                and val != config.get("index_defaults")[key]
+            ):
                 continue
             if key in ["units", "description", "mminlu"]:
                 val = f'"{val}"'
