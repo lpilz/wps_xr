@@ -19,33 +19,3 @@ def wps_static_filename_to_idx(_file):
     for part in _file.split("."):
         idxtmp.append(np.array(list(map(int, part.split("-")))))
     return tuple(idxtmp)
-
-
-def filename_to_idx(_file, tile_extent=None, ceil=False):
-    if tile_extent is None:
-        tile_extent = (1, 1)
-    idxtmp = []
-    _file = os.path.basename(_file)
-    for part, te in zip(_file.split("."), tile_extent):
-        idxtmp.append(int(part.split("-")[int(ceil)]) // te)
-    return tuple(idxtmp)
-
-
-def filelist_to_idxlist(filelist, tile_extent=None, ceil=False):
-    idxlist = []
-    for _file in filelist:
-        print(_file)
-        idxlist.append(filename_to_idx(_file, tile_extent, ceil))
-    return idxlist
-
-
-def extent_from_filelist(filelist, tile_extent=None):
-    idxlist = filelist_to_idxlist(filelist, tile_extent, ceil=True)
-    xlist, ylist = zip(*idxlist)
-    return (np.max(xlist), np.max(ylist))
-
-
-def numtiles_from_filelist(filelist, tile_extent=None):
-    idxlist = filelist_to_idxlist(filelist, tile_extent)
-    xlist, ylist = zip(*idxlist)
-    return tuple(map(len, (np.unique(xlist), np.unique(ylist))))
