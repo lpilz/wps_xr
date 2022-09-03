@@ -73,7 +73,7 @@ def open_dataset(pathname_or_obj):
         combine="by_coords",
     )
     if "missing_value" in config.get("index"):
-        ds.foo = ds.where(ds.foo != config.get("index.missing_value"))
+        ds["foo"] = ds.foo.where(ds.foo != config.get("index.missing_value"))
     ds["foo"] = ds.foo * config.get("index.scale_factor")
     ds.foo.attrs = {
         key: config.get("index")[key]

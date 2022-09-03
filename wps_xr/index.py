@@ -16,8 +16,8 @@ def __read_index(filename_or_obj):
     with open(filename_or_obj, "r") as f:
         for line in f:
             key, val = line.split("=")
-            key = key.lower()
-            val = val.strip("\"'\n")
+            key = key.lower().strip()
+            val = val.strip("\"'\n ")
             try:
                 val = ast.literal_eval(val)
             except (ValueError, SyntaxError):

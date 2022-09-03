@@ -1,3 +1,4 @@
+import math
 import os
 import pathlib
 import shutil
@@ -9,7 +10,7 @@ from loguru import logger
 
 from .config import config
 from .index import _write_index
-from .wps import _generate_dtype
+from .wps import _add_latlon_coords, _generate_dtype
 
 
 def _prepare_wps_directory(dirname_or_obj, force):
@@ -40,14 +41,16 @@ def _pad_data_if_needed(da, tile_size):
 
     Args:
         da (xarray.DataArray): Data to potentially pad.
-        tile_size (tuple of ints): Size of output tiles.
+        tile_size (tuple of ints): Size of output tiles. (x_size, y_size)
 
     Raises:
         KeyError: If padding is necessary but `index.missing_value` is not set.
     """
     shape = np.array([da.shape[da.dims.index(d)] for d in ["x", "y"]])
     tile_size = np.array(tile_size)
-    padding_needed = shape - (shape // tile_size) * tile_size
+    padding_needed = (
+        np.array([math.ceil(x) for x in shape / tile_size]) * tile_size - shape
+    )
     if padding_needed.any():
         try:
             pad_value = config.get("index.missing_value")
@@ -55,11 +58,19 @@ def _pad_data_if_needed(da, tile_size):
             raise KeyError(
                 "Couldn't pad data since index.missing_value is not set in config."
             )
+        _attrs = da.attrs
         da = da.pad(
             pad_width={"x": (0, padding_needed[0]), "y": (0, padding_needed[1])},
             mode="constant",
             constant_values=pad_value,
         )
+        da.attrs = _attrs
+
+        for dim, shp, pad in zip(["x", "y"], shape, padding_needed):
+            start_pad = da[dim][shp - 1].item() + 1
+            newdim = np.append(np.zeros(shp), np.arange(start_pad, start_pad + pad))
+            da[dim] = da[dim].fillna(0) + newdim
+        da = _add_latlon_coords(da)
     return da
 
 
@@ -102,28 +113,24 @@ class WPSAccessor:
 
         _prepare_wps_directory(dirname_or_obj, force)
 
-        self._obj[var] = _pad_data_if_needed(self._obj[var], tile_size)
+        padded = _pad_data_if_needed(self._obj[var], tile_size)
 
-        shape = np.array(
-            [self._obj[var].shape[self._obj[var].dims.index(d)] for d in ["x", "y"]]
-        )
+        shape = np.array([padded.shape[padded.dims.index(d)] for d in ["x", "y"]])
         tile_nums = shape // tile_size
 
         def _fmt(x):
             return f"{x:0{config.get('index.filename_digits')}d}"
 
-        for x in range(0, tile_nums[0] * tile_size[0], tile_size[0]):
-            for y in range(0, tile_nums[1] * tile_size[1], tile_size[1]):
-                xstart, xend = x, x + tile_size[0]
-                ystart, yend = y, y + tile_size[1]
-                filename = (
-                    f"{_fmt(xstart+1)}-{_fmt(xend)}.{_fmt(ystart+1)}-{_fmt(yend)}"
-                )
-                self._obj[var].sel(
+        dtype = _generate_dtype()
+
+        for x in range(1, tile_nums[0] * tile_size[0], tile_size[0]):
+            for y in range(1, tile_nums[1] * tile_size[1], tile_size[1]):
+                xstart, xend = x, x + tile_size[0] - 1
+                ystart, yend = y, y + tile_size[1] - 1
+                filename = f"{_fmt(xstart)}-{_fmt(xend)}.{_fmt(ystart)}-{_fmt(yend)}"
+                padded.sel(
                     {"x": slice(xstart, xend), "y": slice(ystart, yend)}
-                ).values.T.tofile(
-                    os.path.join(dirname_or_obj, filename), format=_generate_dtype()
-                )
+                ).values.T.tofile(os.path.join(dirname_or_obj, filename), format=dtype)
 
         _write_index(dirname_or_obj)
         return
