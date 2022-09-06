@@ -39,7 +39,6 @@ ds.wps.plot(var="usgs")
 It is mainly concerned with building the correct colorbar when encountering `categorical` data.
 
 ## Missing functionality
- - [ ] `index.tile_bdr`
  - [ ] `index.tile_z`
 
 ## TODOS:
