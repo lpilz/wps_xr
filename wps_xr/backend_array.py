@@ -10,6 +10,10 @@ from .config import config
 # FIXME? This backend is dependent on config. It cannot be used independently...
 
 
+def _modify_shape_to_padded(shp, bdr):
+    return [_shp + 2 * bdr if i < 2 else _shp for i, _shp in enumerate(shp)]
+
+
 class BinaryBackendArray(xr.backends.BackendArray):
     def __init__(
         self,
@@ -19,7 +23,7 @@ class BinaryBackendArray(xr.backends.BackendArray):
         lock,
     ):
         self.filename_or_obj = filename_or_obj
-        self.shape = shape
+        self.shape = _modify_shape_to_padded(shape, config.get("index.tile_bdr"))
         self.dtype = dtype
         self.lock = lock
 
@@ -45,10 +49,12 @@ class BinaryBackendArray(xr.backends.BackendArray):
         )
         size = np.dtype(self.dtype).itemsize
         flip_yax = config.get("index.row_order") == "top_bottom"
+        bdr = config.get("index.tile_bdr")
 
         if isinstance(key[0], slice):
             start = key[0].start if key[0].start is not None else 0
-            stop = key[0].stop if key[0].stop is not None else self.shape[0]
+            stop = key[0].stop + bdr if key[0].stop is not None else self.shape[0] - bdr
+            start += bdr
             if flip_yax:
                 start = self.shape[0] - stop
                 stop = self.shape[0] - start
@@ -56,7 +62,7 @@ class BinaryBackendArray(xr.backends.BackendArray):
             count = (stop - start) * np.prod(self.shape[1:])
             modshape = tuple([stop - start] + list(self.shape[1:]))
         else:
-            offset = size * np.prod(self.shape[1:]) * key[0]
+            offset = size * np.prod(self.shape[1:]) * (key[0] + bdr)
             count = 1 * np.prod(self.shape[1:])
             modshape = tuple([1] + list(self.shape[1:]))
 
@@ -64,6 +70,8 @@ class BinaryBackendArray(xr.backends.BackendArray):
             arr = np.fromfile(f, self.dtype, offset=offset, count=count)
 
         arr = arr.reshape(modshape, order="C")
+        if bdr != 0:
+            arr = arr[:, bdr:-bdr, ...]
         if flip_yax:
             arr = np.flip(arr, 0)
 

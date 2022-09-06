@@ -6,8 +6,10 @@ import pytest
 from dask.utils import SerializableLock
 
 from wps_xr.backend_array import BinaryBackendArray
+from wps_xr.config import config
 
 np_arr1 = np.array([[1, 2, 3], [4, 5, 6]]).astype("int8").T
+arr1_pad = np.pad(np_arr1, ((1, 1), (1, 1)))
 np_arr2 = (
     np.array(
         [
@@ -19,6 +21,7 @@ np_arr2 = (
     .astype("int8")
     .T
 )
+arr2_pad = np.pad(np_arr2, ((1, 1), (1, 1), (0, 0)))
 np_arr3 = (
     np.array(
         [
@@ -47,6 +50,7 @@ np_arr3 = (
     .astype("int8")
     .T
 )
+arr3_pad = np.pad(np_arr3, ((1, 1), (1, 1), (0, 0), (0, 0)))
 
 
 @pytest.fixture(scope="session")
@@ -62,62 +66,92 @@ def binfile(request, tmp_path_factory):
 # however, the xarray adapter does not support Ellipsis and newaxis objects,
 # so we don't test for them
 @pytest.mark.parametrize(
-    "binfile,arr",
-    [tuple([np_arr1] * 2), tuple([np_arr2] * 2), tuple([np_arr3] * 2)],
+    "binfile,arr,bdr",
+    [
+        [np_arr1, np_arr1, 0],
+        [np_arr2, np_arr2, 0],
+        [np_arr3, np_arr3, 0],
+        [arr1_pad, arr1_pad, 1],
+        [arr2_pad, arr2_pad, 1],
+        [arr3_pad, arr3_pad, 1],
+    ],
     indirect=["binfile"],
 )
-def test_raw_indexing_method_integers(binfile, arr):
-    test_arr = BinaryBackendArray(binfile, arr.shape, arr.dtype, SerializableLock())
+def test_raw_indexing_method_integers(binfile, arr, bdr):
+    config.set({"index.row_order": "bottom_top"})
+    config.set({"index.tile_bdr": bdr})
+    # in action, shape is inferred from filename (=> is true data shape, non-padded)
+    shape = tuple(
+        [_shp - 2 * bdr if i < 2 else _shp for i, _shp in enumerate(arr.shape)]
+    )
+    test_arr = BinaryBackendArray(binfile, shape, arr.dtype, SerializableLock())
 
     # test element access
     # generate list of all possible indices
-    idxlist = list(itertools.product(*map(list, map(range, arr.shape))))
+    idxlist = list(itertools.product(*map(list, map(range, shape))))
     for idx in idxlist:
         _test = test_arr._raw_indexing_method(tuple(idx))
-        _comp = arr[tuple(idx)]
+        _arr = arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
+        _comp = _arr[tuple(idx)]
         assert getattr(_test, "shape", 0) == getattr(_comp, "shape", 0)
-        assert _test == _comp, f"Access {idx} at {arr} did not work"
+        assert _test == _comp, f"Access {idx} at {_arr} did not work"
         _idx = copy.copy(list(idx))
         _idx[-1] = -idx[-1]
         assert (
-            test_arr._raw_indexing_method(tuple(_idx)) == arr[tuple(_idx)]
-        ), f"Access {idx} at {arr} did not work"
+            test_arr._raw_indexing_method(tuple(_idx)) == _arr[tuple(_idx)]
+        ), f"Access {idx} at {_arr} did not work"
 
     # test trailing slice filling
-    idxlist = list(range(arr.shape[0]))
+    idxlist = list(range(shape[0]))
     for idx in idxlist:
-        assert (test_arr._raw_indexing_method(idx) == arr[idx, :]).all()
-        assert (test_arr._raw_indexing_method(tuple([idx])) == arr[idx, :]).all()
+        _arr = arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
+        assert (test_arr._raw_indexing_method(idx) == _arr[idx, :]).all()
+        assert (test_arr._raw_indexing_method(tuple([idx])) == _arr[idx, :]).all()
 
 
 @pytest.mark.parametrize(
-    "binfile,arr",
-    [tuple([np_arr1] * 2), tuple([np_arr2] * 2), tuple([np_arr3] * 2)],
+    "binfile,arr,bdr",
+    [
+        [np_arr1, np_arr1, 0],
+        [np_arr2, np_arr2, 0],
+        [np_arr3, np_arr3, 0],
+        [arr1_pad, arr1_pad, 1],
+        [arr2_pad, arr2_pad, 1],
+        [arr3_pad, arr3_pad, 1],
+    ],
     indirect=["binfile"],
 )
-def test_raw_indexing_method_slices(binfile, arr):
-    test_arr = BinaryBackendArray(binfile, arr.shape, arr.dtype, SerializableLock())
+def test_raw_indexing_method_slices(binfile, arr, bdr):
+    config.set({"index.row_order": "bottom_top"})
+    config.set({"index.tile_bdr": bdr})
+    # in action, shape is inferred from filename (=> is true data shape, non-padded)
+    shape = tuple(
+        [_shp - 2 * bdr if i < 2 else _shp for i, _shp in enumerate(arr.shape)]
+    )
+    test_arr = BinaryBackendArray(binfile, shape, arr.dtype, SerializableLock())
 
     # generate list of all possible indices
-    idxlist = list(itertools.product(*map(list, map(range, arr.shape))))
+    idxlist = list(itertools.product(*map(list, map(range, shape))))
 
     # test slice access
     for idx in idxlist:
         _idx = tuple(map(lambda x: slice(x, None, None), idx))
         _test = test_arr._raw_indexing_method(_idx)
-        _comp = arr[_idx]
+        _arr = arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
+        _comp = _arr[_idx]
         assert getattr(_test, "shape", 0) == getattr(_comp, "shape", 0)
         assert (_test == _comp).all(), f"Access {_idx} at {arr} did not work"
 
     for idx in idxlist:
         _idx = tuple(map(lambda x: slice(None, x, None), idx))
         _test = test_arr._raw_indexing_method(_idx)
-        _comp = arr[_idx]
+        _arr = arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
+        _comp = _arr[_idx]
         assert getattr(_test, "shape", 0) == getattr(_comp, "shape", 0)
         assert (_test == _comp).all(), f"Access {_idx} at {arr!r} did not work"
 
     dim_slices = []
-    for dim in arr.shape:
+    for dim in shape:
         slicelist = []
         for i, idx in enumerate(range(1, dim)):
             slicelist.append(slice(list(range(dim - 1))[i], idx))
@@ -125,17 +159,19 @@ def test_raw_indexing_method_slices(binfile, arr):
     idxlist = list(itertools.product(*dim_slices))
     for idx in idxlist:
         _test = test_arr._raw_indexing_method(idx)
-        _comp = arr[idx]
+        _arr = arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
+        _comp = _arr[idx]
         assert getattr(_test, "shape", 0) == getattr(_comp, "shape", 0)
         assert (_test == _comp).all(), f"Access {idx} at {arr!r} did not work"
 
     # generate list of steps
     idxlist = list(
-        itertools.product(*map(list, map(range, map(lambda x: x // 2, arr.shape))))
+        itertools.product(*map(list, map(range, map(lambda x: x // 2, shape))))
     )
     for idx in idxlist:
         _idx = tuple(map(lambda x: slice(None, None, x or None), idx))
         _test = test_arr._raw_indexing_method(_idx)
-        _comp = arr[_idx]
+        _arr = arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
+        _comp = _arr[_idx]
         assert getattr(_test, "shape", 0) == getattr(_comp, "shape", 0)
         assert (_test == _comp).all(), f"Access {_idx} at {arr!r} did not work"
