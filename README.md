@@ -1,4 +1,6 @@
 # WPS_XR
+[![GitHub Workflow Status][github-ci-badge]][github-ci-link] [![Code Coverage Status][codecov-badge]][codecov-link]
+
 A collection of tools to integrate WPS geogrid binary datasets into the xarray ecosystem.
 This package provides a function to open geogrid datasets, a configuration to change output format and a function to write data to disk.
 
@@ -41,3 +43,8 @@ It is mainly concerned with building the correct colorbar when encountering `cat
  - [ ] Increase test coverage
  - [ ] Drop hard `dask` dependency
  - [ ] Implement `index.tile_bdr` functionality
+
+[github-ci-badge]: https://img.shields.io/github/workflow/status/lpilz/wps_xr/CI?label=CI&logo=github
+[github-ci-link]: https://github.com/lpilz/wps_xr/actions?query=workflow%3ACI
+[codecov-badge]: https://img.shields.io/codecov/c/github/lpilz/wps_xr.svg?logo=codecov
+[codecov-link]: https://codecov.io/gh/lpilz/wps_xr
