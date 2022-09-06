@@ -38,11 +38,13 @@ ds.wps.plot(var="usgs")
 ```
 It is mainly concerned with building the correct colorbar when encountering `categorical` data.
 
+## Missing functionality
+ - [ ] `index.tile_bdr`
+ - [ ] `index.tile_z`
+
 ## TODOS:
  - [ ] Add projections other than `regular_ll`
- - [ ] Increase test coverage
  - [ ] Drop hard `dask` dependency
- - [ ] Implement `index.tile_bdr` functionality
 
 [github-ci-badge]: https://img.shields.io/github/workflow/status/lpilz/wps_xr/CI?label=CI&logo=github
 [github-ci-link]: https://github.com/lpilz/wps_xr/actions?query=workflow%3ACI
