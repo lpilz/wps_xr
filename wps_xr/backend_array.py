@@ -50,8 +50,8 @@ class BinaryBackendArray(xr.backends.BackendArray):
             start = key[0].start if key[0].start is not None else 0
             stop = key[0].stop if key[0].stop is not None else self.shape[0]
             if flip_yax:
-                start = self.shape[0] - start
-                stop = self.shape[0] - stop
+                start = self.shape[0] - stop
+                stop = self.shape[0] - start
             offset = size * np.prod(self.shape[1:]) * start
             count = (stop - start) * np.prod(self.shape[1:])
             modshape = tuple([stop - start] + list(self.shape[1:]))
