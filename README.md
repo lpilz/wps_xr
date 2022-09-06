@@ -44,6 +44,7 @@ It is mainly concerned with building the correct colorbar when encountering `cat
 ## TODOS:
  - [ ] Add projections other than `regular_ll`
  - [ ] Drop hard `dask` dependency
+ - [ ] Add testing for `index.row_order`
 
 [github-ci-badge]: https://img.shields.io/github/workflow/status/lpilz/wps_xr/CI?label=CI&logo=github
 [github-ci-link]: https://github.com/lpilz/wps_xr/actions?query=workflow%3ACI
