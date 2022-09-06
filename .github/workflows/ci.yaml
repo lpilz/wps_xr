@@ -1,0 +1,57 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: '0 0 * * *' # Daily “At 00:00”
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: python-${{ matrix.python-version }}
+    if: github.repository == 'lpilz/wps_xr'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        id: conda
+        with:
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: wps_xr
+          auto-update-conda: false
+          python-version: ${{ matrix.python-version }}
+          mamba-version: '*'
+          use-mamba: true
+          miniforge-variant: Mambaforge
+          environment-file: ci/environment.yml
+
+      - name: Install wps_xr
+        id: install
+        run: |
+          poetry install
+      - name: Run Tests
+        id: test
+        run: |
+          poetry run pytest --cov=wps_xr --cov-report xml tests/
+      - name: Upload code coverage to Codecov
+        uses: codecov/codecov-action@v2.1.0
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          env_vars: OS,PYTHON
+          name: codecov-umbrella
+          fail_ci_if_error: false
