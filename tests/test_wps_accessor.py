@@ -4,9 +4,11 @@ from itertools import product
 
 import numpy as np
 import pytest
+import xarray as xr
 
 from wps_xr import config
 from wps_xr.wps import open_dataset
+from wps_xr.wps_accessor import _pad_data_if_needed, _prepare_wps_directory
 
 test_files = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
@@ -96,3 +98,79 @@ def test_to_disk_padding(tmp_path_factory, dataset, tile_size, padding):
     assert ds_out[var_name].isnull().any() == padding
     if padding:
         assert ds_out[var_name].isel(x=-1, y=-1).isnull()
+
+
+@pytest.mark.parametrize(
+    "dataset,tile_size",
+    [
+        (f"{os.path.join(test_files,'usgs')}", (200, 200)),
+    ],
+    indirect=["dataset"],
+)
+def test_to_disk_err(tmp_path_factory, dataset, tile_size):
+    dataset["foo"] = xr.Variable(dims="bar", data=np.zeros(1))
+
+    dn = tmp_path_factory.mktemp(f"out_{tile_size[0]}-{tile_size[1]}")
+    with pytest.raises(LookupError):
+        dataset.wps.to_disk(dn, tile_size=tile_size, force=True)
+
+    with pytest.raises(Exception):
+        dataset.wps.to_disk(dn, var=["foo", "usgs"], tile_size=tile_size, force=True)
+
+    with pytest.raises(KeyError):
+        del config.config["index"]["tile_x"]
+        del config.config["index"]["tile_y"]
+        dataset["usgs"] = dataset["usgs"].compute()
+        dataset.wps.to_disk(dn, var="usgs", force=True)
+
+
+def test__prepare_wps_directory(tmp_path_factory):
+    pth = tmp_path_factory.mktemp("tmppath")
+    with pytest.raises(FileExistsError):
+        _prepare_wps_directory(pth)
+    _prepare_wps_directory(pth, force=True)
+
+
+@pytest.mark.parametrize(
+    "dataset,tile_size",
+    [
+        (f"{os.path.join(test_files,'usgs')}", (1200, 1200)),
+        (f"{os.path.join(test_files,'usgs')}", (250, 250)),
+        (f"{os.path.join(test_files,'usgs')}", (200, 200)),
+    ],
+    indirect=["dataset"],
+)
+def test__pad_data_if_needed(dataset, tile_size):
+    missing_val = 127
+    config.set({"index.missing_value": missing_val})
+
+    da = dataset[list(dataset.data_vars.keys())[0]]
+    padded_da = _pad_data_if_needed(da, tile_size)
+
+    assert (np.array(padded_da.shape) % np.array(tile_size) == np.zeros(2)).all()
+    if (np.array(da.size) % np.array(tile_size)).all():
+        assert padded_da.isel(x=-1, y=-1).values == missing_val
+
+
+@pytest.mark.parametrize(
+    "dataset,tile_size",
+    [
+        (f"{os.path.join(test_files,'usgs')}", (250, 250)),
+    ],
+    indirect=["dataset"],
+)
+def test__pad_data_if_needed_keyerr(dataset, tile_size):
+    da = dataset[list(dataset.data_vars.keys())[0]]
+    with pytest.raises(KeyError):
+        _pad_data_if_needed(da, tile_size)
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        f"{os.path.join(test_files,'usgs')}",
+    ],
+    indirect=True,
+)
+def test_plot(dataset):
+    dataset.wps.plot()

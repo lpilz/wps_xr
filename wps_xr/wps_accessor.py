@@ -13,7 +13,7 @@ from .index import _write_index
 from .wps import _add_latlon_coords, _generate_dtype
 
 
-def _prepare_wps_directory(dirname_or_obj, force):
+def _prepare_wps_directory(dirname_or_obj, force=False):
     """Prepares output directory by creating a new one or overriding an old one.
 
     Args:
@@ -74,6 +74,15 @@ def _pad_data_if_needed(da, tile_size):
     return da
 
 
+def _infer_var_name(ds, var):
+    if var is None:
+        if len(ds.data_vars) > 1:
+            raise LookupError("Please provide variable name.")
+        else:
+            return list(ds.data_vars.keys())[0]
+    return var
+
+
 @xr.register_dataset_accessor("wps")
 class WPSAccessor:
     def __init__(self, xarray_obj):
@@ -84,15 +93,13 @@ class WPSAccessor:
 
         Args:
             dirname_or_obj (str, pathlib.Path): Name of output directory.
-            var (str): Name of variable to write to disk.
-            tile_size (tuple): Size of individual tiles to write (x,y).
+            var (str): Name of variable to write to disk. (default: the only `data_var`)
+            tile_size (tuple): Size of individual tiles to write (x,y). If not given,
+                `to_disk` tries to use "index.tile_[x,y]" from config or the dask chunks.
             force (bool): Whether to override existing data if some is present.
+                (default: False)
         """
-        if var is None:
-            if len(self._obj.data_vars) > 1:
-                raise Exception("Please provide variable name.")
-            else:
-                var = list(self._obj.data_vars.keys())[0]
+        var = _infer_var_name(self._obj, var)
 
         if isinstance(var, Iterable) and not isinstance(var, (str, bytes)):
             raise Exception("Can only output a single variable.")
@@ -102,9 +109,11 @@ class WPSAccessor:
                 tile_size = np.array(
                     (config.get("index.tile_x"), config.get("index.tile_y"))
                 )
+                logger.error("Found tile info in config")
             except KeyError:
-                tile_size = np.array((self._obj[var].chunks[d] for d in ["x", "y"]))
-                if tile_size is None:
+                try:
+                    tile_size = np.array([self._obj[var].chunks[d] for d in ["x", "y"]])
+                except TypeError:
                     raise KeyError(
                         "Couldn't set tile size, as index.tile_[x,y] not set in config."
                     )
@@ -135,7 +144,7 @@ class WPSAccessor:
         _write_index(dirname_or_obj)
         return
 
-    def plot(self, var):
+    def plot(self, var=None):
         """Plot variable sensibly.
 
         Plots the given variable in the right orientation,
@@ -144,6 +153,8 @@ class WPSAccessor:
         Args:
             var (str): Variable to plot
         """
+        var = _infer_var_name(self._obj, var)
+
         if self._obj[var].attrs["type"] == "categorical":
             levels = list(
                 range(
