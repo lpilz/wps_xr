@@ -154,7 +154,8 @@ def test_raw_indexing_method_slices(binfile, arr, bdr):
     for dim in shape:
         slicelist = []
         for i, idx in enumerate(range(1, dim)):
-            slicelist.append(slice(list(range(dim - 1))[i], idx))
+            for _i in range(idx):
+                slicelist.append(slice(_i, idx))
         dim_slices.append(slicelist)
     idxlist = list(itertools.product(*dim_slices))
     for idx in idxlist:
