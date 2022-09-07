@@ -15,7 +15,6 @@ test_files = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_fil
     [(os.path.join("usgs", "00001-01200.00001-01200"), "int8", ["x", "y"])],
 )
 def test_open_dataset(filename, dtype, dims):
-    print(test_files, filename)
     _construct_index(os.path.join(test_files, os.path.dirname(filename)))
     ds = xr.open_dataset(
         os.path.join(test_files, filename), dtype=dtype, engine=BinaryBackend

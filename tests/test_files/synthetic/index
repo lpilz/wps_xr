@@ -1,0 +1,17 @@
+type=categorical
+category_min=1
+category_max=10
+projection=regular_ll
+dx=0.5
+dy=0.5
+known_x=1.0
+known_y=1.0
+known_lat=0
+known_lon=0
+wordsize=1
+tile_x=10
+tile_y=10
+tile_z=1
+tile_bdr=1
+units="category"
+description="synthetic data"

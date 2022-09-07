@@ -23,7 +23,8 @@ class BinaryBackendArray(xr.backends.BackendArray):
         lock,
     ):
         self.filename_or_obj = filename_or_obj
-        self.shape = _modify_shape_to_padded(shape, config.get("index.tile_bdr"))
+        self.shape = shape
+        self.padshp = _modify_shape_to_padded(shape, config.get("index.tile_bdr"))
         self.dtype = dtype
         self.lock = lock
 
@@ -43,7 +44,7 @@ class BinaryBackendArray(xr.backends.BackendArray):
             )
 
         key = (
-            tuple([key] + [slice(None)] * (len(self.shape) - 1))
+            tuple([key] + [slice(None)] * (len(self.padshp) - 1))
             if type(key) is int
             else key
         )
@@ -53,18 +54,20 @@ class BinaryBackendArray(xr.backends.BackendArray):
 
         if isinstance(key[0], slice):
             start = key[0].start if key[0].start is not None else 0
-            stop = key[0].stop + bdr if key[0].stop is not None else self.shape[0] - bdr
+            stop = (
+                key[0].stop + bdr if key[0].stop is not None else self.padshp[0] - bdr
+            )
             start += bdr
             if flip_yax:
-                start = self.shape[0] - stop
-                stop = self.shape[0] - start
-            offset = size * np.prod(self.shape[1:]) * start
-            count = (stop - start) * np.prod(self.shape[1:])
-            modshape = tuple([stop - start] + list(self.shape[1:]))
+                start = self.padshp[0] - stop
+                stop = self.padshp[0] - start
+            offset = size * np.prod(self.padshp[1:]) * start
+            count = (stop - start) * np.prod(self.padshp[1:])
+            modshape = tuple([stop - start] + list(self.padshp[1:]))
         else:
-            offset = size * np.prod(self.shape[1:]) * (key[0] + bdr)
-            count = 1 * np.prod(self.shape[1:])
-            modshape = tuple([1] + list(self.shape[1:]))
+            offset = size * np.prod(self.padshp[1:]) * (key[0] + bdr)
+            count = 1 * np.prod(self.padshp[1:])
+            modshape = tuple([1] + list(self.padshp[1:]))
 
         with self.lock, open(self.filename_or_obj) as f:
             arr = np.fromfile(f, self.dtype, offset=offset, count=count)

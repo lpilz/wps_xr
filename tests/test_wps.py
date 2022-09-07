@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from wps_xr.config import config
-from wps_xr.wps import _add_latlon_coords, _generate_dtype, open_dataset
+from wps_xr.wps import _generate_dtype, open_dataset
 
 test_files = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
@@ -42,7 +42,6 @@ def dataset(request):
     indirect=["dataset"],
 )
 def test__add_latlon_coords(dataset, sample_size):
-    dataset = _add_latlon_coords(dataset)
     assert "lat" in dataset.variables and "lat" in dataset.coords
     assert "lon" in dataset.variables and "lon" in dataset.coords
     for x, y in zip(
@@ -60,3 +59,13 @@ def test__add_latlon_coords(dataset, sample_size):
             (smp["lat"] - smp.attrs["known_lat"]) / smp.attrs["dy"]
             + smp.attrs["known_y"],
         )
+
+
+@pytest.mark.parametrize(
+    "dataset", [f"{os.path.join(test_files,'synthetic')}"], indirect=True
+)
+def test_synthetic_data(dataset):
+    assert dataset.synthetic.shape == (10, 10)
+    assert dataset.synthetic.dtype == np.dtype("uint8")
+    for i, row in enumerate(dataset.synthetic.values):
+        assert (row == i + 1).all()
