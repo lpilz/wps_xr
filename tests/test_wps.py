@@ -71,6 +71,12 @@ def test__add_latlon_coords(dataset, sample_size):
             "int8",
         ),
         (
+            f"{os.path.join(test_files,'synthetic2d_same_startend')}",
+            (10, 10),
+            lambda x: -(x + 1),
+            "int8",
+        ),
+        (
             f"{os.path.join(test_files,'synthetic3d')}",
             (10, 10, 2),
             lambda x: [-(x + 1)] * 2,

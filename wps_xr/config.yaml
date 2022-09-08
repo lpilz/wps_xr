@@ -1,6 +1,6 @@
 general:
     VARIABLE_ATTRS: [description, type, category_min, category_max, units, missing_value, isoilwater, isice, isurban, islake, iswater, mminlu]
-    COMBINED_PARAMS: [(tile_z_start, tile_z_end), (category_min, category_max)]
+    COMBINED_PARAMS: [[tile_z_start, tile_z_end], [category_min, category_max]]
 
 index_defaults:
     signed: "no"

@@ -40,7 +40,7 @@ def __check_index(index):
     ]:  # , 'lambert', 'polar', 'mercator',  'albers_nad83', 'polar_wgs84']
         raise NotImplementedError("Other projections are not implemented yet")
     assert index["type"] in ["continuous", "categorical"]
-    assert index["signed"] in ["yes", "no"], index
+    assert index["signed"] in ["yes", "no"]
     assert index["row_order"] in ["bottom_top", "top_bottom"]
     assert index["endian"] in ["big", "little"]
     assert index["filename_digits"] in [5, 6]
@@ -48,14 +48,16 @@ def __check_index(index):
     # the combined parameters should only occur in pairs
     for params in config.get("general.COMBINED_PARAMS"):
         _intersect = set(params).intersection(set(index.keys()))
+        print(params)
         if _intersect:
             assert len(_intersect) == 2
 
     # tile_z_{start,end} and tile_z are mutually exclusive
-    if hasattr(index, "tile_z_start"):
-        assert not hasattr(index, "tile_z")
-    if hasattr(index, "tile_z"):
-        assert not hasattr(index, "tile_z_start") and not hasattr(index, "tile_z_end")
+    if "tile_z_start" in index:
+        assert "tile_z" not in index
+    if "tile_z" in index:
+        assert "tile_z_start" not in index
+        assert "tile_z_end" not in index
 
 
 def _construct_index(pathname_or_obj):
