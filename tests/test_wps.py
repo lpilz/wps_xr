@@ -12,8 +12,8 @@ test_files = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_fil
 @pytest.mark.parametrize(
     "signed,wordsize,endian,expected_dtype",
     [
-        ("yes", 1, "big", "i1"),
-        ("no", 1, "little", "u1"),
+        ("yes", 1, "big", "int8"),
+        ("no", 1, "little", "uint8"),
         ("yes", 2, "big", ">i2"),
         ("yes", 2, "little", "<i2"),
         ("no", 2, "big", ">u2"),
@@ -62,10 +62,51 @@ def test__add_latlon_coords(dataset, sample_size):
 
 
 @pytest.mark.parametrize(
-    "dataset", [f"{os.path.join(test_files,'synthetic')}"], indirect=True
+    "dataset,shape,rowgen,dtype",
+    [
+        (
+            f"{os.path.join(test_files,'synthetic2d')}",
+            (10, 10),
+            lambda x: -(x + 1),
+            "int8",
+        ),
+        (
+            f"{os.path.join(test_files,'synthetic3d')}",
+            (10, 10, 2),
+            lambda x: [-(x + 1)] * 2,
+            "int8",
+        ),
+        (
+            f"{os.path.join(test_files,'synthetic2d_flipped')}",
+            (10, 10),
+            lambda x: x + 1,
+            "uint16",
+        ),
+        (
+            f"{os.path.join(test_files,'synthetic3d_flipped')}",
+            (10, 10, 2),
+            lambda x: [x + 1] * 2,
+            "uint16",
+        ),
+    ],
+    indirect=["dataset"],
 )
-def test_synthetic_data(dataset):
-    assert dataset.synthetic.shape == (10, 10)
-    assert dataset.synthetic.dtype == np.dtype("uint8")
-    for i, row in enumerate(dataset.synthetic.values):
-        assert (row == i + 1).all()
+def test_synthetic_data(dataset, shape, rowgen, dtype):
+    da = dataset[list(dataset.data_vars.keys())[0]]
+    assert da.shape == shape
+    assert da.dtype == np.dtype(dtype)
+    for i, row in enumerate(da.values):
+        assert (row == rowgen(i)).all()
+
+
+@pytest.mark.parametrize(
+    "dataset,z_val",
+    [
+        (f"{os.path.join(test_files,'synthetic3d')}", np.array([1, 2])),
+        (f"{os.path.join(test_files,'synthetic3d_flipped')}", np.array([2, 3])),
+    ],
+    indirect=["dataset"],
+)
+def test_tile_z_start_end(dataset, z_val):
+    da = dataset[list(dataset.data_vars.keys())[0]]
+    assert (da.z.values == z_val).all()

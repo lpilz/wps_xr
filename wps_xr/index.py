@@ -19,12 +19,13 @@ def __read_index(filename_or_obj):
             key = key.lower().strip()
             val = val.strip("\"'\n ")
             try:
-                val = ast.literal_eval(val)
+                if key != "signed":
+                    val = ast.literal_eval(val)
+                else:
+                    pass
             except (ValueError, SyntaxError):
                 pass
             _dict.update({key: val})
-    if "signed" in _dict:
-        _dict["signed"] = "yes" if _dict["signed"] else "no"
     return _dict
 
 

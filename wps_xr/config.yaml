@@ -1,16 +1,15 @@
 general:
     VARIABLE_ATTRS: [description, type, category_min, category_max, units, missing_value, isoilwater, isice, isurban, islake, iswater, mminlu]
-    DIMS_AVAIL: [x, y]
     COMBINED_PARAMS: [(tile_z_start, tile_z_end), (category_min, category_max)]
 
 index_defaults:
-    signed: no
+    signed: "no"
     known_x: 1
     known_y: 1
     tile_bdr: 0
     scale_factor: 1
-    row_order: bottom_top
-    endian: big
+    row_order: "bottom_top"
+    endian: "big"
     iswater: 16
     isice: 24
     isurban: 1
