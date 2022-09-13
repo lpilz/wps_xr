@@ -46,6 +46,7 @@ jobs:
       - name: Run Tests
         id: test
         run: |
+          poetry run pytest --cov=wps_xr --cov-report xml tests/ ||
           poetry run pytest --cov=wps_xr --cov-report xml tests/
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v2.1.0
