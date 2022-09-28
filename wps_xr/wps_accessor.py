@@ -109,7 +109,6 @@ class WPSAccessor:
                 tile_size = np.array(
                     (config.get("index.tile_x"), config.get("index.tile_y"))
                 )
-                logger.error("Found tile info in config")
             except KeyError:
                 try:
                     tile_size = np.array([self._obj[var].chunks[d] for d in ["x", "y"]])
