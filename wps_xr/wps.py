@@ -80,7 +80,7 @@ def open_dataset(pathname_or_obj):
         for key in config.get("general.VARIABLE_ATTRS")
         if key in config.get("index").keys()
     }
-    ds = ds.rename({"foo": os.path.basename(pathname_or_obj)})
+    ds = ds.rename({"foo": os.path.basename(str(pathname_or_obj).rstrip("/"))})
 
     # add global attributes
     ds.attrs = {"directory": pathname_or_obj}
