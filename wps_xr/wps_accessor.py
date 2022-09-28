@@ -123,6 +123,9 @@ class WPSAccessor:
 
         padded = _pad_data_if_needed(self._obj[var], tile_size)
 
+        if padded.isnull().any():
+            padded = padded.fillna(config.get("index.missing_value"))
+
         shape = np.array([padded.shape[padded.dims.index(d)] for d in ["x", "y"]])
         tile_nums = shape // tile_size
 
