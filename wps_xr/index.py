@@ -48,7 +48,6 @@ def __check_index(index):
     # the combined parameters should only occur in pairs
     for params in config.get("general.COMBINED_PARAMS"):
         _intersect = set(params).intersection(set(index.keys()))
-        print(params)
         if _intersect:
             assert len(_intersect) == 2
 
