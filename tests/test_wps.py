@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -6,7 +6,7 @@ import pytest
 from wps_xr.config import config
 from wps_xr.wps import _generate_dtype, open_dataset
 
-test_files = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
+test_files = Path(__file__).parents[0] / "test_files"
 
 
 @pytest.mark.parametrize(
@@ -38,7 +38,7 @@ def dataset(request):
 
 @pytest.mark.parametrize(
     "dataset,sample_size",
-    [(f"{os.path.join(test_files,'usgs')}", 100)],
+    [(test_files / "usgs", 100)],
     indirect=["dataset"],
 )
 def test__add_latlon_coords(dataset, sample_size):
@@ -65,31 +65,31 @@ def test__add_latlon_coords(dataset, sample_size):
     "dataset,shape,rowgen,dtype",
     [
         (
-            f"{os.path.join(test_files,'synthetic2d')}",
+            test_files / "synthetic2d",
             (10, 10),
             lambda x: -(x + 1),
             "int8",
         ),
         (
-            f"{os.path.join(test_files,'synthetic2d_same_startend')}",
+            test_files / "synthetic2d_same_startend",
             (10, 10),
             lambda x: -(x + 1),
             "int8",
         ),
         (
-            f"{os.path.join(test_files,'synthetic3d')}",
+            test_files / "synthetic3d",
             (10, 10, 2),
             lambda x: [-(x + 1)] * 2,
             "int8",
         ),
         (
-            f"{os.path.join(test_files,'synthetic2d_flipped')}",
+            test_files / "synthetic2d_flipped",
             (10, 10),
             lambda x: x + 1,
             "uint16",
         ),
         (
-            f"{os.path.join(test_files,'synthetic3d_flipped')}",
+            test_files / "synthetic3d_flipped",
             (10, 10, 2),
             lambda x: [x + 1] * 2,
             "uint16",
@@ -109,7 +109,7 @@ def test_synthetic_data(dataset, shape, rowgen, dtype):
     "dataset,shape,rowgen,dtype",
     [
         (
-            f"{os.path.join(test_files,'synthetic2d_scaled')}",
+            test_files / "synthetic2d_scaled",
             (10, 10),
             lambda x: -2.5 * (x + 1),
             "float64",
@@ -128,8 +128,8 @@ def test_scale_factor(dataset, shape, rowgen, dtype):
 @pytest.mark.parametrize(
     "dataset,z_val",
     [
-        (f"{os.path.join(test_files,'synthetic3d')}", np.array([1, 2])),
-        (f"{os.path.join(test_files,'synthetic3d_flipped')}", np.array([2, 3])),
+        (test_files / "synthetic3d", np.array([1, 2])),
+        (test_files / "synthetic3d_flipped", np.array([2, 3])),
     ],
     indirect=["dataset"],
 )

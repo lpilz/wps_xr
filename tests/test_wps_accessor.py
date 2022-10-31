@@ -1,6 +1,6 @@
 import math
-import os
 from itertools import product
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -10,7 +10,7 @@ from wps_xr import config
 from wps_xr.wps import open_dataset
 from wps_xr.wps_accessor import _pad_data_if_needed, _prepare_wps_directory
 
-test_files = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
+test_files = Path(__file__).parents[0] / "test_files"
 
 
 def get_num_filename(lst):
@@ -54,9 +54,9 @@ def dataset(request):
 @pytest.mark.parametrize(
     "dataset,tile_size",
     [
-        (f"{os.path.join(test_files,'usgs')}", (1200, 1200)),
-        (f"{os.path.join(test_files,'usgs')}", (250, 250)),
-        (f"{os.path.join(test_files,'usgs')}", (200, 200)),
+        (test_files / "usgs", (1200, 1200)),
+        (test_files / "usgs", (250, 250)),
+        (test_files / "usgs", (200, 200)),
     ],
     indirect=["dataset"],
 )
@@ -67,21 +67,21 @@ def test_to_disk(tmp_path_factory, dataset, tile_size):
 
     dn = tmp_path_factory.mktemp(f"out_{tile_size[0]}-{tile_size[1]}")
     dataset.wps.to_disk(dn, tile_size=tile_size, force=True)
-    indexfile = os.path.join(dn, "index")
-    assert os.path.exists(indexfile) and os.path.isfile(indexfile)
+    indexfile = dn / "index"
+    assert indexfile.exists() and indexfile.is_file()
 
     expected_filelist = gen_expexcted_filelist(dataset, tile_size)
     for _file in expected_filelist:
-        __file = os.path.join(dn, _file)
-        assert os.path.exists(__file) and os.path.isfile(__file)
-        assert os.path.getsize(__file) == np.prod(tile_size)
+        __file = dn / _file
+        assert __file.exists() and __file.is_file()
+        assert __file.stat().st_size == np.prod(tile_size)
 
 
 @pytest.mark.parametrize(
     "dataset,tile_size,padding",
     [
-        (f"{os.path.join(test_files,'usgs')}", (1200, 1200), False),
-        (f"{os.path.join(test_files,'usgs')}", (250, 250), True),
+        (test_files / "usgs", (1200, 1200), False),
+        (test_files / "usgs", (250, 250), True),
     ],
     indirect=["dataset"],
 )
@@ -94,7 +94,7 @@ def test_to_disk_padding(tmp_path_factory, dataset, tile_size, padding):
     dataset.wps.to_disk(dn, tile_size=tile_size, force=True)
 
     ds_out = open_dataset(dn)
-    var_name = os.path.basename(dn)
+    var_name = dn.name
     assert ds_out[var_name].isnull().any() == padding
     if padding:
         assert ds_out[var_name].isel(x=-1, y=-1).isnull()
@@ -103,7 +103,7 @@ def test_to_disk_padding(tmp_path_factory, dataset, tile_size, padding):
 @pytest.mark.parametrize(
     "dataset,tile_size",
     [
-        (f"{os.path.join(test_files,'usgs')}", (200, 200)),
+        (test_files / "usgs", (200, 200)),
     ],
     indirect=["dataset"],
 )
@@ -134,9 +134,9 @@ def test__prepare_wps_directory(tmp_path_factory):
 @pytest.mark.parametrize(
     "dataset,tile_size",
     [
-        (f"{os.path.join(test_files,'usgs')}", (1200, 1200)),
-        (f"{os.path.join(test_files,'usgs')}", (250, 250)),
-        (f"{os.path.join(test_files,'usgs')}", (200, 200)),
+        (test_files / "usgs", (1200, 1200)),
+        (test_files / "usgs", (250, 250)),
+        (test_files / "usgs", (200, 200)),
     ],
     indirect=["dataset"],
 )
@@ -155,7 +155,7 @@ def test__pad_data_if_needed(dataset, tile_size):
 @pytest.mark.parametrize(
     "dataset,tile_size",
     [
-        (f"{os.path.join(test_files,'usgs')}", (250, 250)),
+        (test_files / "usgs", (250, 250)),
     ],
     indirect=["dataset"],
 )
@@ -168,7 +168,7 @@ def test__pad_data_if_needed_keyerr(dataset, tile_size):
 @pytest.mark.parametrize(
     "dataset",
     [
-        f"{os.path.join(test_files,'usgs')}",
+        test_files / "usgs",
     ],
     indirect=True,
 )

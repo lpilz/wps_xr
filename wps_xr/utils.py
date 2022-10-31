@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import numpy as np
 
@@ -15,7 +15,7 @@ def wps_static_filename_to_idx(_file):
         (array([   1, 1200]), array([1201, 2400]))
     """
     idxtmp = []
-    _file = os.path.basename(_file)
+    _file = Path(_file).name
     for part in _file.split("."):
         idxtmp.append(np.array(list(map(int, part.split("-")))))
     return tuple(idxtmp)

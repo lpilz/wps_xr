@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import xarray as xr
 
@@ -53,10 +53,9 @@ def open_dataset(pathname_or_obj):
     Args:
         pathname_or_obj (str,pathlib.Path): Path of the dataset to open
     """
+    pathname_or_obj = Path(pathname_or_obj)
 
-    if not os.path.isdir(pathname_or_obj) and not os.path.exists(
-        os.path.join(pathname_or_obj, "index")
-    ):
+    if not pathname_or_obj.is_dir() and not (pathname_or_obj / "index").exists():
         raise Exception("Please provide the directory of a proper WPS binary dataset.")
 
     index = _construct_index(pathname_or_obj)
@@ -65,9 +64,7 @@ def open_dataset(pathname_or_obj):
     # construct field variable
     index_str = "?" * config.get("index.filename_digits")
     ds = xr.open_mfdataset(
-        os.path.join(
-            pathname_or_obj, f"{index_str}-{index_str}.{index_str}-{index_str}"
-        ),
+        pathname_or_obj.glob(f"{index_str}-{index_str}.{index_str}-{index_str}"),
         engine=BinaryBackend,
         dtype=_generate_dtype(),
         combine="by_coords",
@@ -80,10 +77,10 @@ def open_dataset(pathname_or_obj):
         for key in config.get("general.VARIABLE_ATTRS")
         if key in config.get("index").keys()
     }
-    ds = ds.rename({"foo": os.path.basename(str(pathname_or_obj).rstrip("/"))})
+    ds = ds.rename({"foo": pathname_or_obj.name})
 
     # add global attributes
-    ds.attrs = {"directory": pathname_or_obj}
+    ds.attrs = {"directory": str(pathname_or_obj)}
     ds.attrs.update(
         {
             key: config.get("index")[key]

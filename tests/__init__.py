@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import pytest
 import yaml
@@ -11,10 +11,7 @@ def fix_config_state():
 
     config.clear()
 
-    fn = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        os.path.join("wps_xr", "config.yaml"),
-    )
+    fn = Path(__file__).parents[1] / "wps_xr" / "config.yaml"
     with open(fn) as f:
         defaults = yaml.safe_load(f)
 

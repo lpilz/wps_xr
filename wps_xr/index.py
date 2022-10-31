@@ -1,6 +1,6 @@
 import ast
 import copy
-import os
+from pathlib import Path
 
 from .config import config
 
@@ -65,8 +65,10 @@ def _construct_index(pathname_or_obj):
     Args:
         pathname_or_obj (str,pathlib.Path): Directory/filename to read index file from.
     """
-    if os.path.basename(pathname_or_obj) != "index":
-        pathname_or_obj = os.path.join(pathname_or_obj, "index")
+    pathname_or_obj = Path(pathname_or_obj)
+
+    if pathname_or_obj.name != "index":
+        pathname_or_obj = pathname_or_obj / "index"
 
     _dict = __read_index(pathname_or_obj)
 
@@ -86,8 +88,10 @@ def _write_index(pathname_or_obj):
     Args:
         pathname_or_obj (str,pathlib.Path): Directory/filename to write index file.
     """
-    if os.path.basename(pathname_or_obj) != "index":
-        pathname_or_obj = os.path.join(pathname_or_obj, "index")
+    pathname_or_obj = Path(pathname_or_obj)
+
+    if pathname_or_obj.name != "index":
+        pathname_or_obj = pathname_or_obj / "index"
 
     with open(pathname_or_obj, "w") as f:
         for key, val in config.get("index").items():

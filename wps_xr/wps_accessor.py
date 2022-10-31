@@ -1,8 +1,7 @@
 import math
-import os
-import pathlib
 import shutil
 from collections.abc import Iterable
+from pathlib import Path
 
 import numpy as np
 import xarray as xr
@@ -23,7 +22,7 @@ def _prepare_wps_directory(dirname_or_obj, force=False):
         if force:
             logger.warning("Removing existing directory")
             shutil.rmtree(dirname_or_obj, ignore_errors=True)
-        pathlib.Path(dirname_or_obj).mkdir(parents=True, exist_ok=force)
+        Path(dirname_or_obj).mkdir(parents=True, exist_ok=force)
     except FileExistsError:
         raise FileExistsError(
             "A directory with that name already exists. "
@@ -99,6 +98,7 @@ class WPSAccessor:
             force (bool): Whether to override existing data if some is present.
                 (default: False)
         """
+        dirname_or_obj = Path(dirname_or_obj)
         var = _infer_var_name(self._obj, var)
 
         if isinstance(var, Iterable) and not isinstance(var, (str, bytes)):
@@ -146,7 +146,7 @@ class WPSAccessor:
                 filename = f"{_fmt(xstart)}-{_fmt(xend)}.{_fmt(ystart)}-{_fmt(yend)}"
                 padded.sel(
                     {"x": slice(xstart, xend), "y": slice(ystart, yend)}
-                ).values.T.tofile(os.path.join(dirname_or_obj, filename), format=dtype)
+                ).values.T.tofile(dirname_or_obj / filename, format=dtype)
 
         _write_index(dirname_or_obj)
         return

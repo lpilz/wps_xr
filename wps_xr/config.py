@@ -1,9 +1,9 @@
-import os
+from pathlib import Path
 
 import yaml
 from donfig import Config
 
-fn = os.path.join(os.path.dirname(__file__), "config.yaml")
+fn = Path(__file__).parents[0] / "config.yaml"
 
 with open(fn) as f:
     defaults = yaml.safe_load(f)
