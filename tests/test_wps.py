@@ -106,6 +106,26 @@ def test_synthetic_data(dataset, shape, rowgen, dtype):
 
 
 @pytest.mark.parametrize(
+    "dataset,shape,rowgen,dtype",
+    [
+        (
+            f"{os.path.join(test_files,'synthetic2d_scaled')}",
+            (10, 10),
+            lambda x: -2.5 * (x + 1),
+            "float64",
+        ),
+    ],
+    indirect=["dataset"],
+)
+def test_scale_factor(dataset, shape, rowgen, dtype):
+    da = dataset[list(dataset.data_vars.keys())[0]]
+    assert da.shape == shape
+    assert da.dtype == np.dtype(dtype)
+    for i, row in enumerate(da.values):
+        assert (row == rowgen(i)).all()
+
+
+@pytest.mark.parametrize(
     "dataset,z_val",
     [
         (f"{os.path.join(test_files,'synthetic3d')}", np.array([1, 2])),
