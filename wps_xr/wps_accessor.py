@@ -119,6 +119,11 @@ class WPSAccessor:
         else:
             config.set({"index.tile_x": tile_size[0], "index.tile_y": tile_size[1]})
 
+        if self._obj.attrs != config.get("index"):
+            logger.warning(
+                "Variable attributes and config['index'] differ, using config['index']."
+            )
+
         _prepare_wps_directory(dirname_or_obj, force)
 
         padded = _pad_data_if_needed(self._obj[var], tile_size)
