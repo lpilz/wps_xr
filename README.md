@@ -42,8 +42,7 @@ It is mainly concerned with building the correct colorbar when encountering `cat
 Dependencies in this package are managed by `conda` and `poetry`.
 To install this package follow the following steps:
 ```
-conda env create -f ci/environment.yml
-conda activate wps_xr
+conda env create -f ci/environment.yml && conda activate wps_xr
 poetry build wheel
 ```
 Then the `wps-xr*.whl` file is built in `./dist/` and can be installed using `pip install <file>`.
@@ -51,11 +50,12 @@ Then the `wps-xr*.whl` file is built in `./dist/` and can be installed using `pi
 ## Development
 In order to develop this package, again use `conda` and `poetry`.
 ```
-conda env create -f ci/environment.yml
-conda activate wps_xr
+conda env create -f ci/environment.yml && conda activate wps_xr
 poetry install
 ```
 Then the `pytest`-powered testing can be run using `poetry run pytest .`
+
+To use `pre-commit`, after installing the dependencies execute `poetry run pre-commit install`.
 
 ## TODOS:
  - [ ] Add projections other than `regular_ll`
