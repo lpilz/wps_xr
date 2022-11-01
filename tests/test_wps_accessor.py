@@ -78,14 +78,14 @@ def test_to_disk(tmp_path_factory, dataset, tile_size):
 
 
 @pytest.mark.parametrize(
-    "dataset,tile_size,padding",
+    "dataset,tile_size,will_need_padding",
     [
         (test_files / "usgs", (1200, 1200), False),
         (test_files / "usgs", (250, 250), True),
     ],
     indirect=["dataset"],
 )
-def test_to_disk_padding(tmp_path_factory, dataset, tile_size, padding):
+def test_to_disk_padding(tmp_path_factory, dataset, tile_size, will_need_padding):
     """Tests WPSAccessor.to_disk padding feature"""
     missing_val = 127
     config.set({"index.missing_value": missing_val})
@@ -95,8 +95,8 @@ def test_to_disk_padding(tmp_path_factory, dataset, tile_size, padding):
 
     ds_out = open_dataset(dn)
     var_name = dn.name
-    assert ds_out[var_name].isnull().any() == padding
-    if padding:
+    assert ds_out[var_name].isnull().any() == will_need_padding
+    if will_need_padding:
         assert ds_out[var_name].isel(x=-1, y=-1).isnull()
 
 
