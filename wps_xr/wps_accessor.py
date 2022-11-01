@@ -119,7 +119,7 @@ class WPSAccessor:
         else:
             config.set({"index.tile_x": tile_size[0], "index.tile_y": tile_size[1]})
 
-        if self._obj.attrs != config.get("index"):
+        if {**self._obj[var].attrs, **self._obj.attrs} != config.get("index"):
             logger.warning(
                 "Variable attributes and config['index'] differ, using config['index']."
             )
