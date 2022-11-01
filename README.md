@@ -38,6 +38,25 @@ ds.wps.plot(var="usgs")
 ```
 It is mainly concerned with building the correct colorbar when encountering `categorical` data.
 
+## Installation:
+Dependencies in this package are managed by `conda` and `poetry`.
+To install this package follow the following steps:
+```
+conda env create -f ci/environment.yml
+conda activate wps_xr
+poetry build wheel
+```
+Then the `wps-xr*.whl` file is built in `./dist/` and can be installed using `pip install <file>`.
+
+## Development
+In order to develop this package, again use `conda` and `poetry`.
+```
+conda env create -f ci/environment.yml
+conda activate wps_xr
+poetry install
+```
+Then the `pytest`-powered testing can be run using `poetry run pytest .`
+
 ## TODOS:
  - [ ] Add projections other than `regular_ll`
  - [ ] Drop hard `dask` dependency
