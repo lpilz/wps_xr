@@ -74,8 +74,8 @@ def open_dataset(pathname_or_obj):
     ds["foo"] = ds.foo * config.get("index.scale_factor")
     ds.foo.attrs = {
         key: config.get("index")[key]
-        for key in config.get("general.VARIABLE_ATTRS")
-        if key in config.get("index").keys()
+        for key in config.get("index").keys()
+        if key not in config.get("general.GLOBAL_ATTRS")
     }
     ds = ds.rename({"foo": pathname_or_obj.name})
 
@@ -84,8 +84,8 @@ def open_dataset(pathname_or_obj):
     ds.attrs.update(
         {
             key: config.get("index")[key]
-            for key in config.get("index").keys()
-            if key not in config.get("general.VARIABLE_ATTRS")
+            for key in config.get("general.GLOBAL_ATTRS")
+            if key in config.get("index").keys()
         }
     )
 
