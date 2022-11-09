@@ -38,7 +38,7 @@ ds.wps.plot(var="usgs")
 ```
 It is mainly concerned with building the correct colorbar when encountering `categorical` data.
 
-## Installation:
+## Installation
 Dependencies in this package are managed by `conda` and `poetry`.
 To install this package follow the following steps:
 ```
