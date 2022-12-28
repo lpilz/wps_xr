@@ -62,7 +62,7 @@ To use `pre-commit`, after installing the dependencies execute `poetry run pre-c
  - [ ] Drop hard `dask` dependency
  - [ ] Add tests for `index.missing_value`
 
-[github-ci-badge]: https://img.shields.io/github/workflow/status/lpilz/wps_xr/CI?label=CI&logo=github
+[github-ci-badge]: https://img.shields.io/github/actions/workflow/status/lpilz/wps_xr/ci.yaml?branch=main
 [github-ci-link]: https://github.com/lpilz/wps_xr/actions?query=workflow%3ACI
 [codecov-badge]: https://img.shields.io/codecov/c/github/lpilz/wps_xr.svg?logo=codecov
 [codecov-link]: https://codecov.io/gh/lpilz/wps_xr
