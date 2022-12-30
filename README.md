@@ -60,9 +60,9 @@ Then the `pytest`-powered testing can be run using `poetry run pytest .`
 To use `pre-commit`, after installing the dependencies execute `poetry run pre-commit install`.
 
 ## TODOS:
- - [ ] Add projections other than `regular_ll`
- - [ ] Drop hard `dask` dependency
- - [ ] Add tests for `index.missing_value`
+- [ ] Add projections other than `regular_ll`
+- [ ] Drop hard `dask` dependency
+- [ ] Add tests for `index.missing_value`
 
 [github-ci-badge]: https://img.shields.io/github/actions/workflow/status/lpilz/wps_xr/ci.yaml?branch=main
 [github-ci-link]: https://github.com/lpilz/wps_xr/actions?query=workflow%3ACI
