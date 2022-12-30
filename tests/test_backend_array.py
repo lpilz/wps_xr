@@ -53,6 +53,15 @@ np_arr3 = (
 arr3_pad = np.pad(np_arr3, ((1, 1), (1, 1), (0, 0), (0, 0)))
 
 
+def raw_index_acc_test(test_arr, truth_arr, idx):
+    assert getattr(test_arr, "shape", 0) == getattr(truth_arr, "shape", 0)
+    assert (test_arr == truth_arr).all(), f"Access {idx} at {test_arr} did not work"
+
+
+def remove_bdr_from_arr(arr, bdr):
+    return arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
+
+
 @pytest.fixture(scope="session")
 def binfile(request, tmp_path_factory):
     fn = tmp_path_factory.mktemp("binaries") / "temp"
@@ -90,11 +99,10 @@ def test_raw_indexing_method_integers(binfile, arr, bdr):
     # generate list of all possible indices
     idxlist = list(itertools.product(*map(list, map(range, shape))))
     for idx in idxlist:
-        _test = test_arr._raw_indexing_method(tuple(idx))
-        _arr = arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
-        _comp = _arr[tuple(idx)]
-        assert getattr(_test, "shape", 0) == getattr(_comp, "shape", 0)
-        assert _test == _comp, f"Access {idx} at {_arr} did not work"
+        _arr = remove_bdr_from_arr(arr, bdr)
+        raw_index_acc_test(
+            test_arr._raw_indexing_method(tuple(idx)), _arr[tuple(idx)], idx
+        )
         _idx = copy.copy(list(idx))
         _idx[-1] = -idx[-1]
         assert (
@@ -136,34 +144,32 @@ def test_raw_indexing_method_slices(binfile, arr, bdr):
     # test slice access
     for idx in idxlist:
         _idx = tuple(map(lambda x: slice(x, None, None), idx))
-        _test = test_arr._raw_indexing_method(_idx)
-        _arr = arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
-        _comp = _arr[_idx]
-        assert getattr(_test, "shape", 0) == getattr(_comp, "shape", 0)
-        assert (_test == _comp).all(), f"Access {_idx} at {arr} did not work"
+        raw_index_acc_test(
+            test_arr._raw_indexing_method(_idx),
+            remove_bdr_from_arr(arr, bdr)[_idx],
+            _idx,
+        )
 
     for idx in idxlist:
         _idx = tuple(map(lambda x: slice(None, x, None), idx))
-        _test = test_arr._raw_indexing_method(_idx)
-        _arr = arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
-        _comp = _arr[_idx]
-        assert getattr(_test, "shape", 0) == getattr(_comp, "shape", 0)
-        assert (_test == _comp).all(), f"Access {_idx} at {arr!r} did not work"
+        raw_index_acc_test(
+            test_arr._raw_indexing_method(_idx),
+            remove_bdr_from_arr(arr, bdr)[_idx],
+            _idx,
+        )
 
     dim_slices = []
     for dim in shape:
         slicelist = []
-        for i, idx in enumerate(range(1, dim)):
+        for idx in range(1, dim):
             for _i in range(idx):
                 slicelist.append(slice(_i, idx))
         dim_slices.append(slicelist)
     idxlist = list(itertools.product(*dim_slices))
     for idx in idxlist:
-        _test = test_arr._raw_indexing_method(idx)
-        _arr = arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
-        _comp = _arr[idx]
-        assert getattr(_test, "shape", 0) == getattr(_comp, "shape", 0)
-        assert (_test == _comp).all(), f"Access {idx} at {arr!r} did not work"
+        raw_index_acc_test(
+            test_arr._raw_indexing_method(idx), remove_bdr_from_arr(arr, bdr)[idx], idx
+        )
 
     # generate list of steps
     idxlist = list(
@@ -171,8 +177,8 @@ def test_raw_indexing_method_slices(binfile, arr, bdr):
     )
     for idx in idxlist:
         _idx = tuple(map(lambda x: slice(None, None, x or None), idx))
-        _test = test_arr._raw_indexing_method(_idx)
-        _arr = arr if bdr == 0 else arr[bdr:-bdr, bdr:-bdr, ...]
-        _comp = _arr[_idx]
-        assert getattr(_test, "shape", 0) == getattr(_comp, "shape", 0)
-        assert (_test == _comp).all(), f"Access {_idx} at {arr!r} did not work"
+        raw_index_acc_test(
+            test_arr._raw_indexing_method(_idx),
+            remove_bdr_from_arr(arr, bdr)[_idx],
+            _idx,
+        )
