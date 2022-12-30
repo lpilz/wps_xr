@@ -56,3 +56,5 @@ jobs:
           env_vars: OS,PYTHON
           name: codecov-umbrella
           fail_ci_if_error: false
+      - name: Run Codacy Analysis CLI
+        uses: codacy/codacy-analysis-cli-action@master
