@@ -1,5 +1,7 @@
 # WPS_XR
-[![GitHub Workflow Status][github-ci-badge]][github-ci-link] [![Code Coverage Status][codecov-badge]][codecov-link]
+[![GitHub Workflow Status][github-ci-badge]][github-ci-link]
+[![Code Coverage Status][codecov-badge]][codecov-link]
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/d8e051334b1d4f13bc24d7852378866d)](https://www.codacy.com/gh/lpilz/wps_xr/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=lpilz/wps_xr&amp;utm_campaign=Badge_Grade)
 
 A collection of tools to integrate WPS geogrid binary datasets into the xarray ecosystem.
 This package provides a function to open geogrid datasets, a configuration to change output format and a function to write data to disk.
