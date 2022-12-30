@@ -11,30 +11,41 @@ from .config import config
 from .utils import wps_static_filename_to_idx
 
 
+class MethodNotPossibleException(Exception):
+    pass
+
+
+def _create_shape_and_index_from_tile_z(_shape, _idx):
+    tile_z = config.get("index.tile_z")
+    if tile_z == 1:
+        raise MethodNotPossibleException
+    idx = tuple(list(_idx) + [np.array(range(1, tile_z + 1))])
+    shape = tuple(_shape + [tile_z])
+    return shape, idx
+
+
+def _create_shape_and_index_from_tile_z_start_end(_shape, _idx):
+    tile_z_start, tile_z_end = config.get("index.tile_z_start"), config.get(
+        "index.tile_z_end"
+    )
+    if tile_z_start == tile_z_end:
+        raise MethodNotPossibleException
+    idx = tuple(list(_idx) + [np.array(range(tile_z_start, tile_z_end + 1))])
+    shape = tuple(_shape + [tile_z_end - tile_z_start + 1])
+    return shape, idx
+
+
 def generate_shape_and_coordinate_indices(filename_or_obj):
     _idx = wps_static_filename_to_idx(filename_or_obj)
     _shape = [_i[1] - _i[0] + 1 for _i in _idx]
 
     try:
-        tile_z = config.get("index.tile_z")
-        if tile_z == 1:
-            raise KeyError
-        idx = tuple(list(_idx) + [np.array(range(1, tile_z + 1))])
-        shape = tuple(_shape + [tile_z])
-    except KeyError:
+        return _create_shape_and_index_from_tile_z(_shape, _idx)
+    except (MethodNotPossibleException, KeyError):
         try:
-            tile_z_start, tile_z_end = config.get("index.tile_z_start"), config.get(
-                "index.tile_z_end"
-            )
-            if tile_z_start == tile_z_end:
-                raise KeyError
-            idx = tuple(list(_idx) + [np.array(range(tile_z_start, tile_z_end + 1))])
-            shape = tuple(_shape + [tile_z_end - tile_z_start + 1])
-        except KeyError:
-            idx = _idx
-            shape = _shape
-
-    return shape, idx
+            return _create_shape_and_index_from_tile_z_start_end(_shape, _idx)
+        except (MethodNotPossibleException, KeyError):
+            return _shape, _idx
 
 
 class BinaryBackend(xr.backends.BackendEntrypoint):

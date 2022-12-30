@@ -26,7 +26,7 @@ def _add_latlon_coords(ds):
     return ds
 
 
-def _generate_dtype():
+def _generate_dtype_from_config():
     """Generates datatype from wps_xr.config object
 
     Returns:
@@ -66,7 +66,7 @@ def open_dataset(pathname_or_obj):
     ds = xr.open_mfdataset(
         pathname_or_obj.glob(f"{index_str}-{index_str}.{index_str}-{index_str}"),
         engine=BinaryBackend,
-        dtype=_generate_dtype(),
+        dtype=_generate_dtype_from_config(),
         combine="by_coords",
     )
     if "missing_value" in config.get("index"):

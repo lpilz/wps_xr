@@ -5,6 +5,18 @@ from pathlib import Path
 from .config import config
 
 
+def __extract_key_val_from_line(line):
+    key, val = line.split("=")
+    return key.lower().strip(), val.strip("\"'\n ")
+
+
+def __convert_val(val):
+    try:
+        return ast.literal_eval(val)
+    except (ValueError, SyntaxError):
+        return val
+
+
 def __read_index(filename_or_obj):
     """Reads wps_xr.config.get("index") from given file, overriding defaults.
 
@@ -15,18 +27,38 @@ def __read_index(filename_or_obj):
 
     with open(filename_or_obj, "r") as f:
         for line in f:
-            key, val = line.split("=")
-            key = key.lower().strip()
-            val = val.strip("\"'\n ")
-            try:
-                if key != "signed":
-                    val = ast.literal_eval(val)
-                else:
-                    pass
-            except (ValueError, SyntaxError):
-                pass
-            _dict.update({key: val})
+            key, val = __extract_key_val_from_line(line)
+            _dict.update({key: __convert_val(val) if key != "signed" else val})
     return _dict
+
+
+def __check_switch_options(index):
+    switch_options = {
+        "type": ["continuous", "categorical"],
+        "signed": ["yes", "no"],
+        "row_order": ["bottom_top", "top_bottom"],
+        "endian": ["big", "little"],
+        "filename_digits": [5, 6],
+    }
+    for option in switch_options:
+        assert index[option] in switch_options[option]
+
+
+def __check_paired_options(index):
+    # the combined parameters should only occur in pairs
+    for params in config.get("general.COMBINED_PARAMS"):
+        _intersect = set(params).intersection(set(index.keys()))
+        if _intersect:
+            assert len(_intersect) == 2
+
+
+def __check_exclusive_options(index):
+    # tile_z_{start,end} and tile_z are mutually exclusive
+    if "tile_z_start" in index:
+        assert "tile_z" not in index
+    if "tile_z" in index:
+        assert "tile_z_start" not in index
+        assert "tile_z_end" not in index
 
 
 def __check_index(index):
@@ -39,24 +71,12 @@ def __check_index(index):
         "regular_ll"
     ]:  # , 'lambert', 'polar', 'mercator',  'albers_nad83', 'polar_wgs84']
         raise NotImplementedError("Other projections are not implemented yet")
-    assert index["type"] in ["continuous", "categorical"]
-    assert index["signed"] in ["yes", "no"]
-    assert index["row_order"] in ["bottom_top", "top_bottom"]
-    assert index["endian"] in ["big", "little"]
-    assert index["filename_digits"] in [5, 6]
 
-    # the combined parameters should only occur in pairs
-    for params in config.get("general.COMBINED_PARAMS"):
-        _intersect = set(params).intersection(set(index.keys()))
-        if _intersect:
-            assert len(_intersect) == 2
+    __check_switch_options(index)
 
-    # tile_z_{start,end} and tile_z are mutually exclusive
-    if "tile_z_start" in index:
-        assert "tile_z" not in index
-    if "tile_z" in index:
-        assert "tile_z_start" not in index
-        assert "tile_z_end" not in index
+    __check_paired_options(index)
+
+    __check_exclusive_options(index)
 
 
 def _construct_index(pathname_or_obj):
@@ -80,7 +100,7 @@ def _construct_index(pathname_or_obj):
 
 
 def _write_index(pathname_or_obj):
-    """Writes index file from wps_xr.config.get("index") to disk.
+    """Writes index file from wps_xr.config.get('index') to disk.
 
     Note:
         This function only writes non-default values.

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from wps_xr.config import config
-from wps_xr.wps import _generate_dtype, open_dataset
+from wps_xr.wps import _generate_dtype_from_config, open_dataset
 
 test_files = Path(__file__).parents[0] / "test_files"
 
@@ -28,7 +28,7 @@ def test__generate_dtype(signed, wordsize, endian, expected_dtype):
     config.set(
         {"index.signed": signed, "index.wordsize": wordsize, "index.endian": endian}
     )
-    assert _generate_dtype() == np.dtype(expected_dtype)
+    assert _generate_dtype_from_config() == np.dtype(expected_dtype)
 
 
 @pytest.fixture(scope="session")

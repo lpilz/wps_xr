@@ -9,7 +9,7 @@ from loguru import logger
 
 from .config import config
 from .index import _write_index
-from .wps import _add_latlon_coords, _generate_dtype
+from .wps import _add_latlon_coords, _generate_dtype_from_config
 
 
 def _prepare_wps_directory(dirname_or_obj, force=False):
@@ -33,7 +33,7 @@ def _prepare_wps_directory(dirname_or_obj, force=False):
 def _pad_data_if_needed(da, tile_size):
     """Pads the DataArray if necessary.
 
-    This method checks if padding is necessary and performs it if true.
+    This function checks if padding is necessary and performs it if true.
 
     Note:
         Padding is performed with `index.missing_value` from wps_xr.config object.
@@ -82,10 +82,55 @@ def _infer_var_name(ds, var):
     return var
 
 
+def _write_data_to_files(dirname, data, tile_nums, tile_size):
+    """Outputs data into files depending on tile definitions
+
+    Args:
+        dirname (str, pathlib.Path): name of directory to write output to
+        data (xr.DataArray): array to output
+        tile_nums (tuple of int): number of tiles in x, y direction
+        tile_size (tuple of itn): size of tiles in x, y direction
+    """
+
+    def _fmt(x):
+        return f"{x:0{config.get('index.filename_digits')}d}"
+
+    dtype = _generate_dtype_from_config()
+
+    for x in range(1, tile_nums[0] * tile_size[0], tile_size[0]):
+        for y in range(1, tile_nums[1] * tile_size[1], tile_size[1]):
+            xstart, xend = x, x + tile_size[0] - 1
+            ystart, yend = y, y + tile_size[1] - 1
+            filename = f"{_fmt(xstart)}-{_fmt(xend)}.{_fmt(ystart)}-{_fmt(yend)}"
+            data.sel(
+                {"x": slice(xstart, xend), "y": slice(ystart, yend)}
+            ).values.T.tofile(dirname / filename, format=dtype)
+
+
 @xr.register_dataset_accessor("wps")
 class WPSAccessor:
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
+
+    def _get_tile_size_and_set_config(self, var, tile_size):
+        if tile_size is None:
+            try:
+                tile_size = np.array(
+                    (config.get("index.tile_x"), config.get("index.tile_y"))
+                )
+            except KeyError:
+                try:
+                    tile_size = np.array([self._obj[var].chunks[d] for d in ["x", "y"]])
+                    config.set(
+                        {"index.tile_x": tile_size[0], "index.tile_y": tile_size[1]}
+                    )
+                except TypeError:
+                    raise KeyError(
+                        "Couldn't set tile size, as index.tile_[x,y] not set in config."
+                    )
+        else:
+            config.set({"index.tile_x": tile_size[0], "index.tile_y": tile_size[1]})
+        return tile_size
 
     def to_disk(self, dirname_or_obj, var=None, tile_size=None, force=False):
         """Writes Dataset to disk.
@@ -104,20 +149,7 @@ class WPSAccessor:
         if isinstance(var, Iterable) and not isinstance(var, (str, bytes)):
             raise Exception("Can only output a single variable.")
 
-        if tile_size is None:
-            try:
-                tile_size = np.array(
-                    (config.get("index.tile_x"), config.get("index.tile_y"))
-                )
-            except KeyError:
-                try:
-                    tile_size = np.array([self._obj[var].chunks[d] for d in ["x", "y"]])
-                except TypeError:
-                    raise KeyError(
-                        "Couldn't set tile size, as index.tile_[x,y] not set in config."
-                    )
-        else:
-            config.set({"index.tile_x": tile_size[0], "index.tile_y": tile_size[1]})
+        tile_size = self._get_tile_size_and_set_config(var, tile_size)
 
         if {**self._obj[var].attrs, **self._obj.attrs} != config.get("index"):
             logger.warning(
@@ -134,22 +166,9 @@ class WPSAccessor:
         shape = np.array([padded.shape[padded.dims.index(d)] for d in ["x", "y"]])
         tile_nums = shape // tile_size
 
-        def _fmt(x):
-            return f"{x:0{config.get('index.filename_digits')}d}"
-
-        dtype = _generate_dtype()
-
-        for x in range(1, tile_nums[0] * tile_size[0], tile_size[0]):
-            for y in range(1, tile_nums[1] * tile_size[1], tile_size[1]):
-                xstart, xend = x, x + tile_size[0] - 1
-                ystart, yend = y, y + tile_size[1] - 1
-                filename = f"{_fmt(xstart)}-{_fmt(xend)}.{_fmt(ystart)}-{_fmt(yend)}"
-                padded.sel(
-                    {"x": slice(xstart, xend), "y": slice(ystart, yend)}
-                ).values.T.tofile(dirname_or_obj / filename, format=dtype)
+        _write_data_to_files(dirname_or_obj, padded, tile_nums, tile_size)
 
         _write_index(dirname_or_obj)
-        return
 
     def plot(self, var=None):
         """Plot variable sensibly.
