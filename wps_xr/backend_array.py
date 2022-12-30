@@ -37,7 +37,7 @@ class BinaryBackendArray(xr.backends.BackendArray):
         )
 
     def _raw_indexing_method(self, key: tuple):
-        if type(key) is list:
+        if isinstance(key, list):
             raise NotImplementedError(
                 "Advanced indexing is not implemented,"
                 "as IndexingSupport should only be BASIC."
@@ -45,7 +45,7 @@ class BinaryBackendArray(xr.backends.BackendArray):
 
         key = (
             tuple([key] + [slice(None)] * (len(self.padshp) - 1))
-            if type(key) is int
+            if isinstance(key, int)
             else key
         )
         size = np.dtype(self.dtype).itemsize
