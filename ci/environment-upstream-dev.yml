@@ -1,0 +1,6 @@
+name: wps_xr
+channels:
+    - conda-forge
+    - nodefaults
+dependencies:
+    - poetry
