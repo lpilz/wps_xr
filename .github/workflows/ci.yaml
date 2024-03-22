@@ -26,18 +26,18 @@ jobs:
         python-version: ['3.9', '3.10', '3.11']
     steps:
       - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
+      - name: Set up conda environment
+        uses: mamba-org/setup-micromamba@v1
         id: conda
         with:
-          channels: conda-forge
-          channel-priority: strict
-          activate-environment: wps_xr
-          auto-update-conda: false
-          python-version: ${{ matrix.python-version }}
-          mamba-version: '*'
-          use-mamba: true
-          miniforge-variant: Mambaforge
           environment-file: ci/environment.yml
+          init-shell: >-
+            bash
+          cache-environment: true
+          cache-downloads: true
+          post-cleanup: 'all'
+          create-args: >-
+            python=${{ matrix.python-version }}
 
       - name: Install wps_xr
         id: install
@@ -51,6 +51,7 @@ jobs:
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v4.1.0
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
           flags: unittests
           env_vars: OS,PYTHON
