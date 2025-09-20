@@ -19,7 +19,7 @@ def get_num_filename(lst):
 
 def gen_expexcted_filelist(ds, tile_size):
     # get dimensions
-    x_ext, y_ext = ds.dims["x"], ds.dims["y"]
+    x_ext, y_ext = ds.sizes["x"], ds.sizes["y"]
 
     # number of tiles in each direction
     x_num, y_num = [

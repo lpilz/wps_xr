@@ -45,8 +45,8 @@ def test__add_latlon_coords(dataset, sample_size):
     assert "lat" in dataset.variables and "lat" in dataset.coords
     assert "lon" in dataset.variables and "lon" in dataset.coords
     for x, y in zip(
-        np.random.randint(dataset.dims["x"], size=sample_size),
-        np.random.randint(dataset.dims["y"], size=sample_size),
+        np.random.randint(dataset.sizes["x"], size=sample_size),
+        np.random.randint(dataset.sizes["y"], size=sample_size),
     ):
         smp = dataset.sel(x=x, y=y)
         assert np.isclose(
