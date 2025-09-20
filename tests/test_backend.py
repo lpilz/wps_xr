@@ -26,7 +26,7 @@ def test_open_dataset(filename, dtype, dims, dask):
     )
     assert "foo" in ds.data_vars
     for dim in dims:
-        assert dim in list(ds.dims.keys())
+        assert dim in ds.dims
     assert ds.foo.dtype == dtype
     assert (ds.foo.values != 0).any()
     if dask:
