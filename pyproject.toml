@@ -6,7 +6,7 @@ authors = ["Lukas Pilz <Lukas.Pilz@iup.uni-heidelberg.de>"]
 license = "GPL"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 xarray = "^2024.9.0"
 dask = "^2024.12.1"
 loguru = "^0.7.3"
